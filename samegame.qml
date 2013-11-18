@@ -59,7 +59,6 @@ Rectangle {
             id: score
             anchors { right: parent.right; verticalCenter: parent.verticalCenter }
             text: "Score: Who knows?"
-            color: "#FFFFFF"
         }
     }
 }
