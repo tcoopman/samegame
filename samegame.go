@@ -198,7 +198,7 @@ func (g *Game) floodMoveCheck(col, row, typ int) bool {
 
 func (g *Game) DestroyBlock(block qml.Object, t int) {
 	go func() {
-		time.Sleep(time.Duration(t))
+		time.Sleep(time.Duration(t) * time.Millisecond)
 		block.Destroy()
 	}()
 }
