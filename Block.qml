@@ -5,6 +5,8 @@ Item {
     id: block
 
     property int type: 0
+    property int targetX: 0
+    property int targetY: 0
     property bool dying: false
     
     property bool spawned: false
