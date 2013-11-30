@@ -30,7 +30,7 @@ type Game struct {
 	parent     qml.Object
 	dialog     qml.Object
 	Score      qml.Object
-	lockedOut  bool
+	started    bool
 }
 
 func (g *Game) index(col, row int) int {
@@ -66,9 +66,14 @@ func (g *Game) StartNewGame(parent qml.Object, dialog qml.Object) {
 			g.Board[g.index(col, row)] = g.Block.createBlock(col, row, parent)
 		}
 	}
+	g.started = true
 }
 
 func (g *Game) HandleClick(xPos, yPos int) {
+	if !g.started {
+		return
+	}
+
 	col := xPos / g.Block.BlockSize
 	row := yPos / g.Block.BlockSize
 
