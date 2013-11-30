@@ -10,10 +10,11 @@ import (
 )
 
 const (
-	NB_OF_TYPES = 4
-	MAX_COL     = 10
-	MAX_ROW     = 15
-	MAX_INDEX   = MAX_COL * MAX_ROW
+	NB_OF_TYPES   = 4
+	MAX_COL       = 10
+	MAX_ROW       = 15
+	MAX_INDEX     = MAX_COL * MAX_ROW
+	SCORE_TIMEOUT = 3
 )
 
 var r = rand.New(rand.NewSource(time.Now().UnixNano()))
@@ -28,6 +29,8 @@ type Game struct {
 	floorBoard []int
 	parent     qml.Object
 	dialog     qml.Object
+	Score      qml.Object
+	lockedOut  bool
 }
 
 func (g *Game) index(col, row int) int {
@@ -43,6 +46,10 @@ func (g *Game) StartNewGame(parent qml.Object, dialog qml.Object) {
 
 	g.parent = parent
 	g.dialog = dialog
+
+	score := 0
+	g.parent.Set("score", score)
+	g.Score.Set("text", "Score: "+strconv.Itoa(score))
 
 	w := parent.Int("width")
 	h := parent.Int("height")
@@ -80,8 +87,8 @@ func (g *Game) HandleClick(xPos, yPos int) {
 	score := g.parent.Int("score")
 	score += (g.fillFound - 1) * (g.fillFound - 1)
 	g.parent.Set("score", score)
+	g.Score.Set("text", "Score: "+strconv.Itoa(score))
 
-	g.shuffleDown()
 	g.shuffleDown()
 	g.victoryCheck()
 }
@@ -129,8 +136,9 @@ func (g *Game) shuffleDown() {
 			} else {
 				if fallDist > 0 {
 					obj := g.Board[g.index(col, row)]
-					y := obj.Int("y")
+					y := obj.Int("targetY")
 					y += fallDist * g.Block.BlockSize
+					obj.Set("targetY", y)
 					obj.Set("y", y)
 					g.Board[g.index(col, row+fallDist)] = obj
 					g.Board[g.index(col, row)] = nil
@@ -152,8 +160,9 @@ func (g *Game) shuffleDown() {
 						continue
 					}
 
-					x := obj.Int("x")
+					x := obj.Int("targetX")
 					x -= fallDist * g.Block.BlockSize
+					obj.Set("targetX", x)
 					obj.Set("x", x)
 					g.Board[g.index(col-fallDist, row)] = obj
 					g.Board[g.index(col, row)] = nil
@@ -174,12 +183,18 @@ func (g *Game) victoryCheck() {
 	if deservesBonus {
 		score += 500
 		g.parent.Set("score", score)
+		g.Score.Set("text", "Score: "+strconv.Itoa(score))
 	}
 
 	if deservesBonus || !(g.floodMoveCheck(0, g.MaxRow-1, -1)) {
 		g.dialog.Call("show", "Game over. Your score is "+strconv.Itoa(score))
+		go func() {
+			opened := time.Now()
+			for time.Now().Sub(opened) < time.Second*SCORE_TIMEOUT {
+			}
+			g.dialog.Call("hide")
+		}()
 	}
-
 }
 
 func (g *Game) floodMoveCheck(col, row, typ int) bool {
@@ -214,7 +229,9 @@ func (b *Block) createBlock(col, row int, parent qml.Object) qml.Object {
 
 	dynamicBlock.Set("type", r.Intn(NB_OF_TYPES))
 	dynamicBlock.Set("x", col*b.BlockSize)
+	dynamicBlock.Set("targetX", col*b.BlockSize)
 	dynamicBlock.Set("y", row*b.BlockSize)
+	dynamicBlock.Set("targetY", row*b.BlockSize)
 	dynamicBlock.Set("width", b.BlockSize)
 	dynamicBlock.Set("height", b.BlockSize)
 	dynamicBlock.Set("spawned", true)
@@ -257,6 +274,8 @@ func run() error {
 
 	block := &Block{Component: blockComponent}
 	game.Block = block
+
+	game.Score = win.Root().ObjectByName("score")
 
 	win.Show()
 	win.Wait()

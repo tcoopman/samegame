@@ -22,6 +22,10 @@ Rectangle {
         text: ""
     }
 
+    Behavior on opacity {
+        NumberAnimation { properties:"opacity"; duration: 500 }
+    }
+
     MouseArea {
         anchors.fill: parent
         onClicked: hide();
