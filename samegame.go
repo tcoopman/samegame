@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	"github.com/niemeyer/qml"
+	"gopkg.in/qml.v1"
 	"math/rand"
 	"os"
 	"strconv"
@@ -245,7 +245,7 @@ func (b *Block) createBlock(col, row int, parent qml.Object) qml.Object {
 }
 
 func main() {
-	if err := run(); err != nil {
+	if err := qml.Run(run); err != nil {
 		fmt.Fprintf(os.Stderr, "error: %v\n", err)
 		os.Exit(1)
 	}
@@ -253,7 +253,6 @@ func main() {
 }
 
 func run() error {
-	qml.Init(nil)
 	engine := qml.NewEngine()
 
 	component, err := engine.LoadFile("samegame.qml")
